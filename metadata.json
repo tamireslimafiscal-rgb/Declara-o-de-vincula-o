@@ -1,0 +1,6 @@
+{
+  "name": "Gerador de Declarações Oficiais Word e Excel",
+  "description": "Aplicativo para geração automática e sem erros de declarações e documentos oficiais do Word (.docx) e controle integrado no Excel (.xlsx).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
