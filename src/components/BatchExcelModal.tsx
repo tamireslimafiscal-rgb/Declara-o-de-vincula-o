@@ -6,6 +6,7 @@ import {
   exportDeclarationsToExcel,
 } from '../utils/excelHandler';
 import { generateDeclarationDocx, downloadBlob } from '../utils/docxGenerator';
+import { buildDeclarationFileName } from '../utils/formatUtils';
 import {
   FileSpreadsheet,
   Download,
@@ -189,7 +190,7 @@ export const BatchExcelModal: React.FC<BatchExcelModalProps> = ({
     };
 
     const blob = await generateDeclarationDocx(fullDecl);
-    downloadBlob(blob, `Declaracao_${row.numero_declaracao || '000'}_${row.ano_declaracao || '2026'}.docx`);
+    downloadBlob(blob, buildDeclarationFileName(fullDecl, 'docx'));
   };
 
   return (

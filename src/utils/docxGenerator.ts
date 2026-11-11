@@ -17,7 +17,7 @@ import {
 } from 'docx';
 import { DeclarationData } from '../types/declaration';
 import { BRASAO_RAW_BASE64 } from '../assets/brasaoBase64';
-import { formatAreaM2, formatMemorialWithQuotes, getAutoEnderecoImovel } from './formatUtils';
+import { formatAreaM2, formatMemorialWithQuotes, getAutoEnderecoImovel, formatEnderecoSupressao, formatTermoTCA } from './formatUtils';
 
 function getBrasaoBuffer(): Uint8Array {
   try {
@@ -35,6 +35,7 @@ function getBrasaoBuffer(): Uint8Array {
 
 export async function generateDeclarationDocx(data: DeclarationData): Promise<Blob> {
   const isExterna = data.tipo_vinculacao === 'AREA_EXTERNA';
+  const isInterna = data.tipo_vinculacao === 'AREA_INTERNA';
   const brasaoBytes = getBrasaoBuffer();
 
   const secName = data.secretaria
@@ -43,36 +44,55 @@ export async function generateDeclarationDocx(data: DeclarationData): Promise<Bl
 
   const areaSupressaoFmt = formatAreaM2(data.area_supressao);
   const estagioSup = data.estagio_supressao || 'médio';
-  const tipoProc1doc = data.tipo_processo_1doc || 'Protocolo 1DOC';
+  const matSupressao = data.matricula_imovel_supressao || (isInterna ? data.matricula_interna : data.matricula_imovel_autorizado) || '';
+  const criSupressao = data.cri_imovel_supressao || 'Santa Isabel';
+  const endSupressao = formatEnderecoSupressao(data);
+  const nacionalidade = data.nacionalidade_proprietario || 'brasileira';
+  const tcaFormatado = formatTermoTCA(data.termo_compensacao);
+  const tipoProc1doc = data.tipo_processo_1doc || 'Protocolo 1DOC Nº';
 
   // Montagem do Primeiro Parágrafo com os destaques em negrito oficiais
   const p1Runs: TextRun[] = [
     new TextRun({
-      text: `A Secretaria Municipal de Meio Ambiente e Bem-Estar Animal de Arujá, nas atribuições que lhe foram conferidas de acordo com a deliberação normativa ${data.norma_consema || 'CONSEMA nº 01/2024'} e com a ${data.lei_complementar || 'Lei Complementar Municipal nº 053/2022'}, declara que aprovou a supressão de `,
+      text: `A Secretaria Municipal de Meio Ambiente de Arujá, nas atribuições que lhe foram conferidas de acordo com a deliberação normativa ${data.norma_consema || 'CONSEMA nº 01/2024'} e com a ${data.lei_complementar || 'Lei Complementar Municipal nº 053/2022'}, declara que aprovou a supressão de `,
     }),
     new TextRun({
       text: `${areaSupressaoFmt}`,
       bold: true,
     }),
     new TextRun({
-      text: ` de vegetação nativa em estágio ${estagioSup} no imóvel registrado sob a inscrição ${data.inscricao_imovel || '___'}, ${data.situacao_apm_app || 'fora de APM e APP'}, localizado na ${data.logradouro || '___'}, Quadra ${data.quadra || '___'}, Lote ${data.lote || '___'} – ${data.bairro_condominio || '___'}, neste município pertencente ao proprietário `,
+      text: ` de vegetação nativa em estágio ${estagioSup} de regeneração no imóvel registrado sob a matrícula nº `,
     }),
     new TextRun({
-      text: `${(data.nome_proprietario || '___').toUpperCase()}, CPF: ${data.cpf_proprietario || '___'}`,
+      text: `${matSupressao}`,
       bold: true,
     }),
     new TextRun({
-      text: `, vinculado ao `,
+      text: `, ${data.situacao_apm_app || 'fora de APM e APP'}, Registrado em Cartório do Registro de Imóveis de ${criSupressao}, localizado na ${endSupressao}, Arujá – SP, pertencente ao proprietário `,
     }),
     new TextRun({
-      text: `Termo de Compensação Ambiental ${data.termo_compensacao || '___'}`,
+      text: `${(data.nome_proprietario || '___').toUpperCase()}`,
+      bold: true,
+    }),
+    new TextRun({
+      text: `, CPF `,
+    }),
+    new TextRun({
+      text: `${data.cpf_proprietario || '___'}`,
+      bold: true,
+    }),
+    new TextRun({
+      text: `, ${nacionalidade}, vinculado ao `,
+    }),
+    new TextRun({
+      text: `Termo de Compensação Ambiental ${tcaFormatado}`,
       bold: true,
     }),
     new TextRun({
       text: `, expedido no `,
     }),
     new TextRun({
-      text: `${tipoProc1doc} Nº ${data.protocolo_1doc || '___'}`,
+      text: `${tipoProc1doc} ${data.protocolo_1doc || '___'}`,
       bold: true,
     }),
     new TextRun({
@@ -92,6 +112,7 @@ export async function generateDeclarationDocx(data: DeclarationData): Promise<Bl
 
   if (isExterna) {
     const areaVinculadaExtFmt = formatAreaM2(data.area_vinculada_externa);
+    const areaTotalGlebaFmt = formatAreaM2(data.area_total_gleba);
     const areaTotalLoteAutFmt = formatAreaM2(data.area_total_lote_autorizado);
     const endLoteAut = data.endereco_lote_autorizado || getAutoEnderecoImovel(data) || '___';
     const coordsExt = formatMemorialWithQuotes(data.coordenadas_poligono_externo);
@@ -105,13 +126,13 @@ export async function generateDeclarationDocx(data: DeclarationData): Promise<Bl
         bold: true,
       }),
       new TextRun({
-        text: `, com área total de ${data.area_total_gleba || '___'}, `,
+        text: `, com área total de ${areaTotalGlebaFmt}, `,
       }),
       new TextRun({
         text: `situado á ${data.localizacao_zona_origem || '___'}, `,
       }),
       new TextRun({
-        text: `referente a compensação ambiental externa para atender à supressão de ${areaSupressaoFmt} de vegetação nativa em estágio ${data.estagio_regeneracao || 'médio'} de regeneração`,
+        text: `referente a compensação ambiental externa para atender à supressão de ${areaSupressaoFmt} de vegetação nativa em estágio ${data.estagio_supressao || data.estagio_regeneracao || 'médio'} de regeneração`,
         bold: true,
         underline: {},
       }),
@@ -143,7 +164,7 @@ export async function generateDeclarationDocx(data: DeclarationData): Promise<Bl
         text: `, com área total de ${areaTotalLoteIntFmt}, situado à, ${endInterna}, `,
       }),
       new TextRun({
-        text: `referente a obrigatoriedade de manter vegetação nativa em estágio ${data.estagio_regeneracao || 'médio'} de regeneração no lote para atender à supressão de ${areaSupressaoFmt} de vegetação nativa`,
+        text: `referente a obrigatoriedade de manter vegetação nativa em estágio ${data.estagio_regeneracao || data.estagio_supressao || 'médio'} de regeneração no lote para atender à supressão de ${areaSupressaoFmt} de vegetação nativa`,
         bold: true,
         underline: {},
       }),
@@ -286,13 +307,13 @@ export async function generateDeclarationDocx(data: DeclarationData): Promise<Bl
     },
   });
 
-  // Criar documento Word com espaçamento de 1,5 linha (360 twips)
+  // Criar documento Word com Times New Roman tamanho 11 e espaçamento de 1,5 linha (360 twips)
   const doc = new Document({
     styles: {
       default: {
         document: {
           run: {
-            font: 'Arial',
+            font: 'Times New Roman',
             size: 22, // 11pt
             color: '000000',
           },
@@ -358,7 +379,7 @@ export async function generateDeclarationDocx(data: DeclarationData): Promise<Bl
                               new TextRun({
                                 text: `${data.endereco_secretaria || 'Rua Fenacita, nº 500, Jardim Fazenda Rincão – CEP 07428-205'}`,
                                 size: 17, // ~8.5pt
-                                font: 'Arial',
+                                font: 'Times New Roman',
                                 bold: true,
                                 color: '000000',
                               }),
@@ -387,7 +408,7 @@ export async function generateDeclarationDocx(data: DeclarationData): Promise<Bl
                               new TextRun({
                                 text: `${data.contato_secretaria || 'Telefone: (11) 4653-1845 – E-mail: meioambiente.diretoria@aruja.sp.gov.br'}`,
                                 size: 16, // 8pt
-                                font: 'Arial',
+                                font: 'Times New Roman',
                                 color: '000000',
                               }),
                             ],
@@ -411,28 +432,28 @@ export async function generateDeclarationDocx(data: DeclarationData): Promise<Bl
                               new TextRun({
                                 text: 'Página ',
                                 size: 16,
-                                font: 'Arial',
+                                font: 'Times New Roman',
                                 bold: true,
                                 color: '000000',
                               }),
                               new TextRun({
                                 children: [PageNumber.CURRENT],
                                 size: 16,
-                                font: 'Arial',
+                                font: 'Times New Roman',
                                 bold: true,
                                 color: '000000',
                               }),
                               new TextRun({
                                 text: ' / ',
                                 size: 16,
-                                font: 'Arial',
+                                font: 'Times New Roman',
                                 bold: true,
                                 color: '000000',
                               }),
                               new TextRun({
                                 children: [PageNumber.TOTAL_PAGES],
                                 size: 16,
-                                font: 'Arial',
+                                font: 'Times New Roman',
                                 bold: true,
                                 color: '000000',
                               }),
@@ -448,7 +469,7 @@ export async function generateDeclarationDocx(data: DeclarationData): Promise<Bl
           }),
         },
         children: [
-          // Título do Documento com espaçamento
+          // Título do Documento com espaçamento (Times New Roman 11)
           new Paragraph({
             alignment: AlignmentType.CENTER,
             spacing: { before: 240, after: 360, line: 360 },
@@ -456,7 +477,8 @@ export async function generateDeclarationDocx(data: DeclarationData): Promise<Bl
               new TextRun({
                 text: `DECLARAÇÃO PARA VINCULAÇÃO Nº ${data.numero_declaracao || '___'}/${data.ano_declaracao || '2026'}`,
                 bold: true,
-                size: 24, // 12pt
+                font: 'Times New Roman',
+                size: 22, // 11pt
               }),
             ],
           }),
@@ -484,7 +506,8 @@ export async function generateDeclarationDocx(data: DeclarationData): Promise<Bl
             children: [
               new TextRun({
                 text: `${data.cidade_emissao || 'Arujá'}, ${data.data_emissao || '___'}.`,
-                size: 22,
+                font: 'Times New Roman',
+                size: 22, // 11pt
               }),
             ],
           }),
@@ -497,7 +520,8 @@ export async function generateDeclarationDocx(data: DeclarationData): Promise<Bl
               new TextRun({
                 text: (data.nome_secretario || 'JUVENAL FERNANDO PENTEADO').toUpperCase(),
                 bold: true,
-                size: 22,
+                font: 'Times New Roman',
+                size: 22, // 11pt
               }),
             ],
           }),
@@ -507,7 +531,8 @@ export async function generateDeclarationDocx(data: DeclarationData): Promise<Bl
             children: [
               new TextRun({
                 text: data.cargo_secretario || 'Secretário de Meio Ambiente e Bem-Estar Animal de Arujá',
-                size: 20,
+                font: 'Times New Roman',
+                size: 22, // 11pt
               }),
             ],
           }),

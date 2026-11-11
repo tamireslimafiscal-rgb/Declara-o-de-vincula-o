@@ -26,8 +26,11 @@ export interface DeclarationData {
   // Imóvel Objeto da Supressão
   area_supressao: string; // m²
   estagio_supressao?: string; // ex: 'médio' ou 'inicial'
+  matricula_imovel_supressao?: string; // matrícula do lote da supressão
+  cri_imovel_supressao?: string; // cartório do imóvel da supressão
   inscricao_imovel: string;
   situacao_apm_app: string;
+  endereco_completo_supressao?: string; // rua, lote, quadra, bairro
   logradouro: string;
   quadra: string;
   lote: string;
@@ -38,11 +41,12 @@ export interface DeclarationData {
   // Requerente / Proprietário
   nome_proprietario: string;
   cpf_proprietario: string;
+  nacionalidade_proprietario?: string; // padrão: 'brasileira'
 
   // Processo Administrativo
-  termo_compensacao: string; // ex: N°166/2025
-  tipo_processo_1doc?: string; // ex: 'Protocolo 1DOC' ou 'Licenciamento Ambiental 1DOC'
-  protocolo_1doc: string;    // ex: 7.019/2024 ou 9.257/2025
+  termo_compensacao: string; // ex: 002/2026 ou N°166/2025
+  tipo_processo_1doc?: string; // 'Protocolo 1DOC Nº' ou 'Licenciamento Ambiental Nº'
+  protocolo_1doc: string;    // ex: 9.257/2025 ou 7.019/2024
 
   // Cartório de Registro de Imóveis para Averbação
   matricula_averbacao: string;

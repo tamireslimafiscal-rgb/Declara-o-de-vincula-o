@@ -325,22 +325,20 @@ export const DeclarationForm: React.FC<DeclarationFormProps> = ({
 
           <div className="col-span-2">
             <label className="block text-xs font-medium text-slate-700 mb-1">
-              Processo de Expedição (1DOC) *
+              Processo de Expedição *
             </label>
             <div className="flex flex-col sm:flex-row gap-2">
               <select
-                value={data.tipo_processo_1doc || 'Protocolo 1DOC'}
+                value={data.tipo_processo_1doc || 'Protocolo 1DOC Nº'}
                 onChange={(e) => updateField('tipo_processo_1doc', e.target.value)}
-                className={`w-full sm:w-1/2 text-xs sm:text-sm rounded-md px-3 py-2 border border-slate-300 bg-white font-medium`}
+                className="w-full sm:w-1/2 text-xs sm:text-sm rounded-md px-3 py-2 border border-slate-300 bg-white font-medium"
               >
-                <option value="Protocolo 1DOC">Protocolo 1DOC</option>
-                <option value="Licenciamento Ambiental 1DOC">Licenciamento Ambiental 1DOC</option>
-                <option value="Licenciamento Ambiental">Licenciamento Ambiental</option>
-                <option value="Protocolo">Protocolo</option>
+                <option value="Protocolo 1DOC Nº">Protocolo 1DOC Nº</option>
+                <option value="Licenciamento Ambiental Nº">Licenciamento Ambiental Nº</option>
               </select>
               <input
                 type="text"
-                placeholder="Nº: ex: 9.257/2025"
+                placeholder="Número (ex: 7.019/2024)"
                 value={data.protocolo_1doc}
                 onChange={(e) => updateField('protocolo_1doc', e.target.value)}
                 className={getInputClass('protocolo_1doc')}
@@ -350,11 +348,11 @@ export const DeclarationForm: React.FC<DeclarationFormProps> = ({
 
           <div>
             <label className="block text-xs font-medium text-slate-700 mb-1">
-              Termo TCA Nº *
+              Termo TCA *
             </label>
             <input
               type="text"
-              placeholder="N°166/2025"
+              placeholder="Ex: 002/2026 ou 166/2025"
               value={data.termo_compensacao}
               onChange={(e) => updateField('termo_compensacao', e.target.value)}
               className={getInputClass('termo_compensacao')}
@@ -390,13 +388,13 @@ export const DeclarationForm: React.FC<DeclarationFormProps> = ({
         </div>
       </div>
 
-      {/* Seção 2: Proprietário e Imóvel da Supressão */}
+      {/* Seção 2: Primeiro Parágrafo - Proprietário e Imóvel da Supressão */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-2xs space-y-4">
         <div className="flex items-center justify-between border-b border-slate-100 pb-2">
           <div className="flex items-center gap-2">
             <MapPin size={16} className="text-emerald-600" />
             <h3 className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-slate-800">
-              2. Proprietário & Imóvel Autorizado
+              2. Primeiro Parágrafo: Proprietário & Imóvel da Supressão
             </h3>
           </div>
           <button
@@ -410,14 +408,15 @@ export const DeclarationForm: React.FC<DeclarationFormProps> = ({
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {/* Dados do Proprietário */}
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <div className="sm:col-span-2">
             <label className="block text-xs font-medium text-slate-700 mb-1">
               Nome do Proprietário / Requerente *
             </label>
             <input
               type="text"
-              placeholder="Ex: BRUNO WELLINGTON BASAGLIA"
+              placeholder="Ex: PAULO ROGÉRIO SANTOS"
               value={data.nome_proprietario}
               onChange={(e) => updateField('nome_proprietario', e.target.value)}
               className={getInputClass('nome_proprietario')}
@@ -436,32 +435,46 @@ export const DeclarationForm: React.FC<DeclarationFormProps> = ({
               className={getInputClass('cpf_proprietario')}
             />
           </div>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-              Inscrição Imobiliária *
-            </label>
-            <input
-              type="text"
-              placeholder="SE12010801.000"
-              value={data.inscricao_imovel}
-              onChange={(e) => updateField('inscricao_imovel', e.target.value)}
-              className={getInputClass('inscricao_imovel')}
-            />
-          </div>
 
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="block text-xs font-medium text-slate-700">
+                Nacionalidade *
+              </label>
+              <button
+                type="button"
+                onClick={() => updateField('nacionalidade_proprietario', 'brasileira')}
+                className={`px-2 py-0.5 text-[10px] rounded border font-medium transition-all ${
+                  (data.nacionalidade_proprietario || 'brasileira') === 'brasileira'
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                    : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                brasileira
+              </button>
+            </div>
+            <input
+              type="text"
+              placeholder="brasileira"
+              value={data.nacionalidade_proprietario || 'brasileira'}
+              onChange={(e) => updateField('nacionalidade_proprietario', e.target.value)}
+              className={getInputClass('nacionalidade_proprietario')}
+            />
+          </div>
+        </div>
+
+        {/* Dados do Lote Autorizado para Supressão */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-slate-50/80 rounded-lg border border-slate-200">
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-slate-700">
                 Área de Supressão *
               </label>
               <span className="text-[10px] text-blue-600 font-semibold">m² automático</span>
             </div>
             <input
               type="text"
-              placeholder="ex: 854,66"
+              placeholder="ex: 205,00"
               value={data.area_supressao}
               onChange={(e) => updateField('area_supressao', e.target.value)}
               className={getInputClass('area_supressao')}
@@ -469,28 +482,71 @@ export const DeclarationForm: React.FC<DeclarationFormProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-              Quadra *
+            <label className="block text-xs font-semibold text-slate-700 mb-1">
+              Matrícula do Lote da Supressão *
             </label>
             <input
+              id="matricula_imovel_supressao"
+              name="matricula_imovel_supressao"
               type="text"
-              placeholder="28"
-              value={data.quadra}
-              onChange={(e) => updateField('quadra', e.target.value)}
-              className={getInputClass('quadra')}
+              placeholder="Digite o número da matrícula"
+              value={data.matricula_imovel_supressao ?? (isInterna ? data.matricula_interna : data.matricula_imovel_autorizado) ?? ''}
+              onChange={(e) => {
+                const val = e.target.value;
+                const updates: Partial<DeclarationData> = {
+                  matricula_imovel_supressao: val,
+                };
+                if (isInterna) {
+                  updates.matricula_interna = val;
+                  if (!data.matricula_averbacao || data.matricula_averbacao === data.matricula_interna || data.matricula_averbacao === data.matricula_imovel_supressao) {
+                    updates.matricula_averbacao = val;
+                  }
+                } else if (isExterna) {
+                  updates.matricula_imovel_autorizado = val;
+                }
+                onChange({
+                  ...data,
+                  ...updates,
+                  updatedAt: new Date().toISOString(),
+                });
+              }}
+              className={getInputClass('matricula_imovel_supressao')}
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-              Lote *
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-semibold text-slate-700">
+                CRI do Imóvel da Supressão *
+              </label>
+              <div className="flex gap-1">
+                {['Santa Isabel', 'Mogi das Cruzes'].map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => {
+                      updateField('cri_imovel_supressao', c);
+                      if (data.tipo_vinculacao === 'AREA_EXTERNA') {
+                        updateField('cri_imovel_autorizado', c);
+                      }
+                    }}
+                    className={`px-1.5 py-0.2 text-[10px] rounded border font-medium ${
+                      (data.cri_imovel_supressao || 'Santa Isabel') === c
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
+                    }`}
+                  >
+                    {c.split(' ')[0]}
+                  </button>
+                ))}
+              </div>
+            </div>
             <input
               type="text"
-              placeholder="27"
-              value={data.lote}
-              onChange={(e) => updateField('lote', e.target.value)}
-              className={getInputClass('lote')}
+              placeholder="Santa Isabel"
+              value={data.cri_imovel_supressao || 'Santa Isabel'}
+              onChange={(e) => updateField('cri_imovel_supressao', e.target.value)}
+              className={getInputClass('cri_imovel_supressao')}
             />
           </div>
         </div>
@@ -502,34 +558,43 @@ export const DeclarationForm: React.FC<DeclarationFormProps> = ({
               Estágio da Vegetação da Supressão *
             </label>
             <div className="flex items-center gap-1.5 mb-1.5">
-              <button
-                type="button"
-                onClick={() => updateField('estagio_supressao', 'médio')}
-                className={`px-3 py-1 rounded text-xs font-medium transition-all ${
-                  (data.estagio_supressao || 'médio') === 'médio'
-                    ? 'bg-blue-600 text-white font-semibold shadow-2xs'
-                    : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-100'
-                }`}
-              >
-                Médio
-              </button>
-              <button
-                type="button"
-                onClick={() => updateField('estagio_supressao', 'inicial')}
-                className={`px-3 py-1 rounded text-xs font-medium transition-all ${
-                  data.estagio_supressao === 'inicial'
-                    ? 'bg-blue-600 text-white font-semibold shadow-2xs'
-                    : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-100'
-                }`}
-              >
-                Inicial
-              </button>
+              {['médio', 'inicial'].map((est) => (
+                <button
+                  key={est}
+                  type="button"
+                  onClick={() =>
+                    onChange({
+                      ...data,
+                      estagio_supressao: est,
+                      estagio_regeneracao: est,
+                      updatedAt: new Date().toISOString(),
+                    })
+                  }
+                  className={`px-3 py-1 rounded text-xs font-medium transition-all ${
+                    (data.estagio_supressao || 'médio') === est
+                      ? 'bg-blue-600 text-white font-semibold shadow-2xs'
+                      : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-100'
+                  }`}
+                >
+                  {est.charAt(0).toUpperCase() + est.slice(1)}
+                </button>
+              ))}
             </div>
             <input
+              id="estagio_supressao"
+              name="estagio_supressao"
               type="text"
               placeholder="médio ou inicial"
               value={data.estagio_supressao || 'médio'}
-              onChange={(e) => updateField('estagio_supressao', e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                onChange({
+                  ...data,
+                  estagio_supressao: val,
+                  estagio_regeneracao: val,
+                  updatedAt: new Date().toISOString(),
+                });
+              }}
               className={getInputClass('estagio_supressao')}
             />
           </div>
@@ -569,59 +634,141 @@ export const DeclarationForm: React.FC<DeclarationFormProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-              Logradouro / Endereço *
+        {/* Endereço do Lote da Supressão */}
+        <div className="space-y-2 p-3 bg-slate-50/80 rounded-lg border border-slate-200">
+          <div className="flex items-center justify-between">
+            <label className="block text-xs font-semibold text-slate-700">
+              Endereço Completo do Imóvel da Supressão (Rua, Lote, Quadra, Bairro) *
             </label>
-            <input
-              type="text"
-              placeholder="Alameda das Quaresmeiras"
-              value={data.logradouro}
-              onChange={(e) => updateField('logradouro', e.target.value)}
-              className={getInputClass('logradouro')}
-            />
+            <span className="text-[10px] text-slate-500">Arujá – SP incluído no texto oficial</span>
           </div>
+          <input
+            type="text"
+            placeholder="Ex: Alameda das Quaresmeiras, Lote 27, Quadra 28, Bairro Arujá Country Club"
+            value={data.endereco_completo_supressao || ''}
+            onChange={(e) => {
+              const val = e.target.value;
+              updateField('endereco_completo_supressao', val);
+              if (data.tipo_vinculacao === 'AREA_EXTERNA' && !data.endereco_lote_autorizado) {
+                updateField('endereco_lote_autorizado', val);
+              }
+            }}
+            className={getInputClass('endereco_completo_supressao')}
+          />
 
-          <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-              Bairro / Condomínio *
-            </label>
-            <input
-              type="text"
-              placeholder="Arujá Country Club - Arujá – SP"
-              value={data.bairro_condominio}
-              onChange={(e) => updateField('bairro_condominio', e.target.value)}
-              className={getInputClass('bairro_condominio')}
-            />
-          </div>
+          <details className="text-xs text-slate-600 pt-1">
+            <summary className="cursor-pointer text-[11px] font-medium text-blue-600 hover:text-blue-800">
+              Ou preencher campos detalhados (Rua, Quadra, Lote, Bairro)
+            </summary>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2 pt-2 border-t border-slate-200">
+              <div>
+                <label className="block text-[11px] font-medium text-slate-700 mb-0.5">Rua / Logradouro</label>
+                <input
+                  type="text"
+                  placeholder="Alameda das Quaresmeiras"
+                  value={data.logradouro}
+                  onChange={(e) => updateField('logradouro', e.target.value)}
+                  className="w-full text-xs rounded-md p-1.5 border border-slate-300"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-slate-700 mb-0.5">Quadra</label>
+                <input
+                  type="text"
+                  placeholder="28"
+                  value={data.quadra}
+                  onChange={(e) => updateField('quadra', e.target.value)}
+                  className="w-full text-xs rounded-md p-1.5 border border-slate-300"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-slate-700 mb-0.5">Lote</label>
+                <input
+                  type="text"
+                  placeholder="27"
+                  value={data.lote}
+                  onChange={(e) => updateField('lote', e.target.value)}
+                  className="w-full text-xs rounded-md p-1.5 border border-slate-300"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] font-medium text-slate-700 mb-0.5">Bairro / Condomínio</label>
+                <input
+                  type="text"
+                  placeholder="Arujá Country Club"
+                  value={data.bairro_condominio}
+                  onChange={(e) => updateField('bairro_condominio', e.target.value)}
+                  className="w-full text-xs rounded-md p-1.5 border border-slate-300"
+                />
+              </div>
+            </div>
+          </details>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-              Matrícula para Averbação (1º Parágrafo) *
-            </label>
-            <input
-              type="text"
-              placeholder="84.694 (externa) ou 7.346 (interna)"
-              value={data.matricula_averbacao}
-              onChange={(e) => updateField('matricula_averbacao', e.target.value)}
-              className={getInputClass('matricula_averbacao')}
-            />
+        {/* Averbação a ser Realizada (Final do 1º Parágrafo) */}
+        <div className="p-3 bg-blue-50/50 rounded-lg border border-blue-200 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-blue-900">
+              Averbação a ser Realizada (Final do 1º Parágrafo)
+            </span>
+            <span className="text-[11px] text-blue-700">
+              {isExterna ? 'Matrícula da Área Externa' : 'Matrícula da Área Interna'}
+            </span>
           </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-slate-700 mb-1">
+                Matrícula para Averbação *
+              </label>
+              <input
+                id="matricula_averbacao"
+                name="matricula_averbacao"
+                type="text"
+                placeholder={isExterna ? "Ex: 84.694 (área externa)" : "Ex: 7.346 (área interna)"}
+                value={data.matricula_averbacao ?? (isInterna ? (data.matricula_imovel_supressao || data.matricula_interna) : '') ?? ''}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const updates: Partial<DeclarationData> = { matricula_averbacao: val };
+                  if (isInterna) {
+                    updates.matricula_imovel_supressao = val;
+                    updates.matricula_interna = val;
+                  }
+                  onChange({ ...data, ...updates, updatedAt: new Date().toISOString() });
+                }}
+                className={getInputClass('matricula_averbacao')}
+              />
+            </div>
 
-          <div>
-            <label className="block text-xs font-medium text-slate-700 mb-1">
-              CRI para Averbação *
-            </label>
-            <input
-              type="text"
-              placeholder="Mogi das Cruzes ou Santa Isabel"
-              value={data.cri_averbacao}
-              onChange={(e) => updateField('cri_averbacao', e.target.value)}
-              className={getInputClass('cri_averbacao')}
-            />
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-medium text-slate-700">
+                  CRI para Averbação *
+                </label>
+                <div className="flex gap-1">
+                  {['Santa Isabel', 'Mogi das Cruzes'].map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => updateField('cri_averbacao', c)}
+                      className={`px-1.5 py-0.2 text-[10px] rounded border font-medium ${
+                        (data.cri_averbacao || 'Santa Isabel') === c
+                          ? 'bg-blue-600 text-white border-blue-600'
+                          : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
+                      }`}
+                    >
+                      {c.split(' ')[0]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <input
+                type="text"
+                placeholder="Ex: Santa Isabel ou Mogi das Cruzes"
+                value={data.cri_averbacao}
+                onChange={(e) => updateField('cri_averbacao', e.target.value)}
+                className={getInputClass('cri_averbacao')}
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -693,16 +840,28 @@ export const DeclarationForm: React.FC<DeclarationFormProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
-                  Área Total da Gleba *
-                </label>
-                <input
-                  type="text"
-                  placeholder="108,389ha."
-                  value={data.area_total_gleba || ''}
-                  onChange={(e) => updateField('area_total_gleba', e.target.value)}
-                  className={getInputClass('area_total_gleba')}
-                />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-medium text-slate-700">
+                    Área Total da Gleba *
+                  </label>
+                  <span className="text-[10px] text-blue-600 font-semibold">m² automático</span>
+                </div>
+                <div className="relative">
+                  <input
+                    id="area_total_gleba"
+                    name="area_total_gleba"
+                    type="text"
+                    placeholder="ex: 5.000,00"
+                    value={data.area_total_gleba || ''}
+                    onChange={(e) => updateField('area_total_gleba', e.target.value)}
+                    className={`${getInputClass('area_total_gleba')} pr-9`}
+                  />
+                  {!/ha\.?$|hectare|m²|m2/i.test(data.area_total_gleba || '') && (
+                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 pointer-events-none">
+                      m²
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -744,10 +903,20 @@ export const DeclarationForm: React.FC<DeclarationFormProps> = ({
                   Matrícula do Imóvel Autorizado *
                 </label>
                 <input
+                  id="matricula_imovel_autorizado"
+                  name="matricula_imovel_autorizado"
                   type="text"
                   placeholder="7.346"
-                  value={data.matricula_imovel_autorizado || ''}
-                  onChange={(e) => updateField('matricula_imovel_autorizado', e.target.value)}
+                  value={data.matricula_imovel_autorizado ?? data.matricula_imovel_supressao ?? ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    onChange({
+                      ...data,
+                      matricula_imovel_autorizado: val,
+                      matricula_imovel_supressao: val,
+                      updatedAt: new Date().toISOString(),
+                    });
+                  }}
                   className={getInputClass('matricula_imovel_autorizado')}
                 />
               </div>
@@ -779,16 +948,28 @@ export const DeclarationForm: React.FC<DeclarationFormProps> = ({
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1">
-                  Área Total do Lote Autorizado
-                </label>
-                <input
-                  type="text"
-                  placeholder="321,00m²"
-                  value={data.area_total_lote_autorizado || ''}
-                  onChange={(e) => updateField('area_total_lote_autorizado', e.target.value)}
-                  className={getInputClass('area_total_lote_autorizado')}
-                />
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-medium text-slate-700">
+                    Área Total do Lote Autorizado
+                  </label>
+                  <span className="text-[10px] text-blue-600 font-semibold">m² automático</span>
+                </div>
+                <div className="relative">
+                  <input
+                    id="area_total_lote_autorizado"
+                    name="area_total_lote_autorizado"
+                    type="text"
+                    placeholder="ex: 321,00"
+                    value={data.area_total_lote_autorizado || ''}
+                    onChange={(e) => updateField('area_total_lote_autorizado', e.target.value)}
+                    className={`${getInputClass('area_total_lote_autorizado')} pr-9`}
+                  />
+                  {!/ha\.?$|hectare|m²|m2/i.test(data.area_total_lote_autorizado || '') && (
+                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 pointer-events-none">
+                      m²
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -868,10 +1049,21 @@ export const DeclarationForm: React.FC<DeclarationFormProps> = ({
                   Matrícula do Lote *
                 </label>
                 <input
+                  id="matricula_interna"
+                  name="matricula_interna"
                   type="text"
                   placeholder="28.692"
-                  value={data.matricula_interna || ''}
-                  onChange={(e) => updateField('matricula_interna', e.target.value)}
+                  value={data.matricula_interna ?? data.matricula_imovel_supressao ?? ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    onChange({
+                      ...data,
+                      matricula_interna: val,
+                      matricula_imovel_supressao: val,
+                      matricula_averbacao: val,
+                      updatedAt: new Date().toISOString(),
+                    });
+                  }}
                   className={getInputClass('matricula_interna')}
                 />
               </div>
@@ -924,13 +1116,22 @@ export const DeclarationForm: React.FC<DeclarationFormProps> = ({
                   </label>
                   <span className="text-[10px] text-blue-600 font-semibold">m² automático</span>
                 </div>
-                <input
-                  type="text"
-                  placeholder="ex: 1.221,00"
-                  value={data.area_total_lote_interna || ''}
-                  onChange={(e) => updateField('area_total_lote_interna', e.target.value)}
-                  className={getInputClass('area_total_lote_interna')}
-                />
+                <div className="relative">
+                  <input
+                    id="area_total_lote_interna"
+                    name="area_total_lote_interna"
+                    type="text"
+                    placeholder="ex: 1.221,00"
+                    value={data.area_total_lote_interna || ''}
+                    onChange={(e) => updateField('area_total_lote_interna', e.target.value)}
+                    className={`${getInputClass('area_total_lote_interna')} pr-9`}
+                  />
+                  {!/ha\.?$|hectare|m²|m2/i.test(data.area_total_lote_interna || '') && (
+                    <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400 pointer-events-none">
+                      m²
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -997,6 +1198,8 @@ export const DeclarationForm: React.FC<DeclarationFormProps> = ({
                   Inicial
                 </button>
                 <input
+                  id="estagio_regeneracao"
+                  name="estagio_regeneracao"
                   type="text"
                   placeholder="médio ou inicial"
                   value={data.estagio_regeneracao || 'médio'}

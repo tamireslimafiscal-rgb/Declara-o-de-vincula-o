@@ -27,6 +27,7 @@ export const SAMPLE_MODELO_EXTERNO: DeclarationData = {
   ano_declaracao: '2026',
 
   area_supressao: '224,70',
+  matricula_imovel_supressao: '',
   inscricao_imovel: 'SE12010801.000',
   logradouro: 'Alameda das Quaresmeiras',
   quadra: '28',
@@ -74,6 +75,7 @@ export const SAMPLE_MODELO_INTERNO: DeclarationData = {
   ano_declaracao: '2026',
 
   area_supressao: '224,70',
+  matricula_imovel_supressao: '',
   inscricao_imovel: 'SE12010801.000',
   logradouro: 'Alameda das Quaresmeiras',
   quadra: '28',
@@ -130,8 +132,11 @@ export function createNewBlankDeclaration(type: DeclarationType = 'AREA_EXTERNA'
 
     area_supressao: '',
     estagio_supressao: 'médio',
+    matricula_imovel_supressao: '',
+    cri_imovel_supressao: 'Santa Isabel',
     inscricao_imovel: '',
     situacao_apm_app: 'fora de APM e APP',
+    endereco_completo_supressao: '',
     logradouro: '',
     quadra: '',
     lote: '',
@@ -139,9 +144,10 @@ export function createNewBlankDeclaration(type: DeclarationType = 'AREA_EXTERNA'
 
     nome_proprietario: '',
     cpf_proprietario: '',
+    nacionalidade_proprietario: 'brasileira',
 
     termo_compensacao: '',
-    tipo_processo_1doc: 'Protocolo 1DOC',
+    tipo_processo_1doc: 'Protocolo 1DOC Nº',
     protocolo_1doc: '',
 
     matricula_averbacao: '',

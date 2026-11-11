@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { DeclarationData } from '../types/declaration';
 import { generateDeclarationDocx, downloadBlob } from '../utils/docxGenerator';
+import { buildDeclarationFileName } from '../utils/formatUtils';
 import {
   X,
   Search,
@@ -48,12 +49,7 @@ export const HistoryDrawer: React.FC<HistoryDrawerProps> = ({
     e.stopPropagation();
     try {
       const blob = await generateDeclarationDocx(item);
-      const cleanNum = (item.numero_declaracao || '000').padStart(3, '0');
-      const cleanYear = item.ano_declaracao || '2026';
-      const cleanOwner = (item.nome_proprietario || 'PROCESSO')
-        .replace(/[^a-zA-Z0-9]/g, '_')
-        .substring(0, 25);
-      downloadBlob(blob, `${cleanNum}_${cleanYear}_DECLARACAO_${cleanOwner}.docx`);
+      downloadBlob(blob, buildDeclarationFileName(item, 'docx'));
     } catch (err) {
       console.error(err);
     }

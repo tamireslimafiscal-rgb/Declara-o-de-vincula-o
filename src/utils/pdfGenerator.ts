@@ -13,6 +13,10 @@ export async function exportElementToPdf(containerId: string, filename: string):
   const originalScrollX = window.scrollX;
 
   try {
+    if (document.fonts && document.fonts.ready) {
+      await document.fonts.ready;
+    }
+
     // Buscar todas as páginas oficiais A4 renderizadas dentro do container
     const pageElements = Array.from(
       container.querySelectorAll<HTMLElement>('.official-document-page')
@@ -71,6 +75,8 @@ export async function exportElementToPdf(containerId: string, filename: string):
             activeClonedPage.style.minHeight = '1123px';
             activeClonedPage.style.boxSizing = 'border-box';
             activeClonedPage.style.backgroundColor = '#ffffff';
+            activeClonedPage.style.fontFamily = '"Times New Roman", "Tinos", "Liberation Serif", Times, serif';
+            activeClonedPage.style.fontSize = '11pt';
           }
         },
       });

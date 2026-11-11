@@ -6,7 +6,7 @@ import { exportDeclarationsToExcel } from '../utils/excelHandler';
 import { exportElementToPdf } from '../utils/pdfGenerator';
 import { splitMemorialDescritivo } from '../utils/textSplitter';
 import { BRASAO_ARUJA_BASE64 } from '../assets/brasaoBase64';
-import { formatAreaM2, formatMemorialWithQuotes, getAutoEnderecoImovel } from '../utils/formatUtils';
+import { formatAreaM2, formatMemorialWithQuotes, getAutoEnderecoImovel, formatEnderecoSupressao, formatTermoTCA, buildDeclarationFileName } from '../utils/formatUtils';
 
 interface DocumentPreviewProps {
   data: DeclarationData;
@@ -61,23 +61,21 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         title={`Clique para alterar no formulário: ${String(fieldName)}`}
         className={`inline-block px-1 py-0.2 rounded transition-all cursor-pointer ${
           isMissing
-            ? 'bg-rose-100 text-rose-900 border border-rose-300 font-bold animate-pulse'
+            ? 'bg-rose-100 text-rose-900 border border-rose-300 font-bold'
             : 'bg-amber-100 text-amber-950 border border-amber-300 hover:bg-amber-200'
         } ${extraClasses}`}
       >
-        {content}
+        {content || (
+          <span className="text-rose-600 font-normal italic text-[11px]">
+            [preencher {String(fieldName).replace(/_/g, ' ')}]
+          </span>
+        )}
       </span>
     );
   };
 
-  const getCleanFileName = (extension: string) => {
-    const cleanNum = (data.numero_declaracao || '000').padStart(3, '0');
-    const cleanYear = data.ano_declaracao || '2026';
-    const cleanOwner = (data.nome_proprietario || 'PROCESSO')
-      .replace(/[^a-zA-Z0-9]/g, '_')
-      .substring(0, 22);
-    const tipo = isExterna ? 'AREA_EXTERNA' : 'AREA_INTERNA';
-    return `${cleanNum}_${cleanYear}_DECLARACAO_VINCULACAO_${tipo}_${cleanOwner}.${extension}`;
+  const getCleanFileName = (extension: 'pdf' | 'docx') => {
+    return buildDeclarationFileName(data, extension);
   };
 
   const handleDownloadDocx = async () => {
@@ -120,13 +118,18 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     const sec = data.secretaria || 'SECRETARIA MUNICIPAL DE MEIO AMBIENTE E BEM-ESTAR ANIMAL';
     const areaSupFmt = formatAreaM2(data.area_supressao, '___m²');
     const estagioSup = data.estagio_supressao || 'médio';
-    const tipoProc = data.tipo_processo_1doc || 'Protocolo 1DOC';
+    const matSupressao = data.matricula_imovel_supressao || (isInterna ? data.matricula_interna : data.matricula_imovel_autorizado) || '';
+    const criSupressao = data.cri_imovel_supressao || 'Santa Isabel';
+    const endSupressao = formatEnderecoSupressao(data);
+    const nacionalidade = data.nacionalidade_proprietario || 'brasileira';
+    const tcaFormatado = formatTermoTCA(data.termo_compensacao);
+    const tipoProc = data.tipo_processo_1doc || 'Protocolo 1DOC Nº';
 
-    const p1 = `A Secretaria Municipal de Meio Ambiente e Bem-Estar Animal de Arujá, nas atribuições que lhe foram conferidas de acordo com a deliberação normativa ${data.norma_consema || 'CONSEMA nº 01/2024'} e com a ${data.lei_complementar || 'Lei Complementar Municipal nº 053/2022'}, declara que aprovou a supressão de ${areaSupFmt} de vegetação nativa em estágio ${estagioSup} no imóvel registrado sob a inscrição ${data.inscricao_imovel || '___'}, ${data.situacao_apm_app || 'fora de APM e APP'}, localizado na ${data.logradouro || '___'}, Quadra ${data.quadra || '___'}, Lote ${data.lote || '___'} – ${data.bairro_condominio || '___'}, neste município pertencente ao proprietário ${(data.nome_proprietario || '___').toUpperCase()}, CPF: ${data.cpf_proprietario || '___'}, vinculado ao Termo de Compensação Ambiental ${data.termo_compensacao || '___'}, expedido no ${tipoProc} Nº ${data.protocolo_1doc || '___'}. Declara-se, ainda, que, conforme solicitado, e após o envio e análise dos documentos apresentados, os quais foram aprovados por esta Secretaria no que se refere à solicitação de supressão de vegetação nativa e compensação ambiental correspondente, deve ser realizada a seguinte averbação à margem da matrícula nº ${data.matricula_averbacao || '___'} do CRI de ${data.cri_averbacao || '___'}. Tal averbação deverá ser apresentada a esta Secretaria para a emissão da autorização competente.`;
+    const p1 = `A Secretaria Municipal de Meio Ambiente de Arujá, nas atribuições que lhe foram conferidas de acordo com a deliberação normativa ${data.norma_consema || 'CONSEMA nº 01/2024'} e com a ${data.lei_complementar || 'Lei Complementar Municipal nº 053/2022'}, declara que aprovou a supressão de ${areaSupFmt} de vegetação nativa em estágio ${estagioSup} de regeneração no imóvel registrado sob a matrícula nº ${matSupressao}, ${data.situacao_apm_app || 'fora de APM e APP'}, Registrado em Cartório do Registro de Imóveis de ${criSupressao}, localizado na ${endSupressao}, Arujá – SP, pertencente ao proprietário ${(data.nome_proprietario || '___').toUpperCase()}, CPF ${data.cpf_proprietario || '___'}, ${nacionalidade}, vinculado ao Termo de Compensação Ambiental ${tcaFormatado}, expedido no ${tipoProc} ${data.protocolo_1doc || '___'}. Declara-se, ainda, que, conforme solicitado, e após o envio e análise dos documentos apresentados, os quais foram aprovados por esta Secretaria no que se refere à solicitação de supressão de vegetação nativa e compensação ambiental correspondente, deve ser realizada a seguinte averbação à margem da matrícula nº ${data.matricula_averbacao || '___'} do CRI de ${data.cri_averbacao || '___'}. Tal averbação deverá ser apresentada a esta Secretaria para a emissão da autorização competente.`;
 
     const p2 = isExterna
-      ? `“Fica vinculada uma área de ${formatAreaM2(data.area_vinculada_externa, '___m²')} do imóvel objeto da matrícula nº ${data.matricula_origem_externa || data.matricula_averbacao || '___'} do CRI de ${data.cri_origem_externa || data.cri_averbacao || '___'}, descrito como “${data.descricao_imovel_origem || '___'}”, de propriedade de ${(data.proprietario_compensacao || '___').toUpperCase()}, com área total de ${data.area_total_gleba || '___'}, situado á ${data.localizacao_zona_origem || '___'}, referente a compensação ambiental externa para atender à supressão de ${areaSupFmt} de vegetação nativa em estágio ${data.estagio_regeneracao || 'médio'} de regeneração, autorizada no imóvel objeto da matrícula ${data.matricula_imovel_autorizado || '___'} – CRI ${data.cri_imovel_autorizado || '___'}, de propriedade de ${data.proprietario_autorizado || data.nome_proprietario || '___'}, com área total de ${formatAreaM2(data.area_total_lote_autorizado, '___m²')}, situado ${data.endereco_lote_autorizado || getAutoEnderecoImovel(data) || '___'}, município de Arujá, afim de atender o Termo de Compensação Ambiental ${data.termo_compensacao || '___'}.\n\nÁrea de compensação ambiental matrícula ${data.matricula_origem_externa || data.matricula_averbacao || '___'} – Cartório de Registro de Imóveis de ${data.cri_origem_externa || data.cri_averbacao || '___'}, ${formatAreaM2(data.area_vinculada_externa, '___m²')}, coordenadas geográficas do polígono: ${formatMemorialWithQuotes(data.coordenadas_poligono_externo, '“___”')}”`
-      : `“Fica vinculada uma área verde de ${formatAreaM2(data.area_verde_interna, '___m²')} do imóvel objeto da matrícula nº ${data.matricula_interna || data.matricula_averbacao || '___'} do CRI de ${data.cri_interna || data.cri_averbacao || '___'}, descrito como “${data.descricao_lote_interna || '___'}”, situado no bairro ${data.bairro_interna || '___'}, município de ${data.municipio_interna || 'Arujá'}, de propriedade de ${(data.proprietario_objeto || data.nome_proprietario || '___').toUpperCase()}, com área total de ${formatAreaM2(data.area_total_lote_interna, '___m²')}, situado à, ${data.endereco_lote_interna || getAutoEnderecoImovel(data) || '___'}, referente a obrigatoriedade de manter vegetação nativa em estágio ${data.estagio_regeneracao || 'médio'} de regeneração no lote para atender à supressão de ${areaSupFmt} de vegetação nativa, autorizada no mesmo imóvel, afim de atender o Termo de Compensação Ambiental ${data.termo_compensacao || '___'}.\n\nCoordenadas geográficas do polígono da Área Verde urbana obrigatória a ser mantida no lote: ${formatMemorialWithQuotes(data.memorial_descritivo_vertices, '“___”')}`;
+      ? `“Fica vinculada uma área de ${formatAreaM2(data.area_vinculada_externa, '___m²')} do imóvel objeto da matrícula nº ${data.matricula_origem_externa || data.matricula_averbacao || '___'} do CRI de ${data.cri_origem_externa || data.cri_averbacao || '___'}, descrito como “${data.descricao_imovel_origem || '___'}”, de propriedade de ${(data.proprietario_compensacao || '___').toUpperCase()}, com área total de ${formatAreaM2(data.area_total_gleba, '___m²')}, situado á ${data.localizacao_zona_origem || '___'}, referente a compensação ambiental externa para atender à supressão de ${areaSupFmt} de vegetação nativa em estágio ${data.estagio_supressao || data.estagio_regeneracao || 'médio'} de regeneração, autorizada no imóvel objeto da matrícula ${data.matricula_imovel_autorizado || '___'} – CRI ${data.cri_imovel_autorizado || '___'}, de propriedade de ${data.proprietario_autorizado || data.nome_proprietario || '___'}, com área total de ${formatAreaM2(data.area_total_lote_autorizado, '___m²')}, situado ${data.endereco_lote_autorizado || getAutoEnderecoImovel(data) || '___'}, município de Arujá, afim de atender o Termo de Compensação Ambiental ${data.termo_compensacao || '___'}.\n\nÁrea de compensação ambiental matrícula ${data.matricula_origem_externa || data.matricula_averbacao || '___'} – Cartório de Registro de Imóveis de ${data.cri_origem_externa || data.cri_averbacao || '___'}, ${formatAreaM2(data.area_vinculada_externa, '___m²')}, coordenadas geográficas do polígono: ${formatMemorialWithQuotes(data.coordenadas_poligono_externo, '“___”')}”`
+      : `“Fica vinculada uma área verde de ${formatAreaM2(data.area_verde_interna, '___m²')} do imóvel objeto da matrícula nº ${data.matricula_interna || data.matricula_averbacao || '___'} do CRI de ${data.cri_interna || data.cri_averbacao || '___'}, descrito como “${data.descricao_lote_interna || '___'}”, situado no bairro ${data.bairro_interna || '___'}, município de ${data.municipio_interna || 'Arujá'}, de propriedade de ${(data.proprietario_objeto || data.nome_proprietario || '___').toUpperCase()}, com área total de ${formatAreaM2(data.area_total_lote_interna, '___m²')}, situado à, ${data.endereco_lote_interna || getAutoEnderecoImovel(data) || '___'}, referente a obrigatoriedade de manter vegetação nativa em estágio ${data.estagio_regeneracao || data.estagio_supressao || 'médio'} de regeneração no lote para atender à supressão de ${areaSupFmt} de vegetação nativa, autorizada no mesmo imóvel, afim de atender o Termo de Compensação Ambiental ${data.termo_compensacao || '___'}.\n\nCoordenadas geográficas do polígono da Área Verde urbana obrigatória a ser mantida no lote: ${formatMemorialWithQuotes(data.memorial_descritivo_vertices, '“___”')}`;
 
     const full = `${data.prefeitura}\n${data.estado}\n${sec}\n\nDECLARAÇÃO PARA VINCULAÇÃO Nº ${data.numero_declaracao}/${data.ano_declaracao}\n\n${p1}\n\n${p2}\n\n${data.cidade_emissao}, ${data.data_emissao}.\n\n${data.nome_secretario}\n${data.cargo_secretario}`;
 
@@ -153,14 +156,14 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         </div>
 
         {/* Textos institucionais 100% centralizados em relação à largura da folha */}
-        <div className="w-full text-center font-sans border-0 outline-none px-4">
-          <h1 className="text-[15px] sm:text-[16px] font-bold tracking-tight uppercase text-black leading-snug">
+        <div className="w-full text-center border-0 outline-none px-4">
+          <h1 className="text-[12pt] font-bold tracking-tight uppercase text-black leading-snug">
             {data.prefeitura || 'PREFEITURA DE ARUJÁ'}
           </h1>
-          <h2 className="text-[12px] sm:text-[13px] font-medium uppercase text-black leading-snug mt-0.5">
+          <h2 className="text-[10pt] font-medium uppercase text-black leading-snug mt-0.5">
             {data.estado || 'ESTADO DE SÃO PAULO'}
           </h2>
-          <h3 className="text-[12px] sm:text-[13px] font-bold uppercase text-black leading-snug mt-0.5">
+          <h3 className="text-[10pt] font-bold uppercase text-black leading-snug mt-0.5">
             {secretariaTitulo.toUpperCase()}
           </h3>
         </div>
@@ -177,15 +180,15 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
     const contSec = data.contato_secretaria || 'Telefone: (11) 4653-1845 – E-mail: meioambiente.diretoria@aruja.sp.gov.br';
 
     return (
-      <div className="w-full border border-black p-2.5 mt-6 font-sans text-[10.5px] text-black leading-tight">
-        <div className="text-center font-medium">
+      <div className="w-full border border-black p-2.5 mt-6 text-[8.5pt] text-black leading-tight">
+        <div className="text-center font-bold">
           {endSec}
         </div>
-        <div className="flex items-center justify-between mt-1 px-1">
+        <div className="flex items-center justify-between mt-1 px-1 text-[8pt]">
           <div>
             {contSec}
           </div>
-          <div className="font-semibold whitespace-nowrap">
+          <div className="font-bold whitespace-nowrap">
             Página {pageNumber} / {totalPages}
           </div>
         </div>
@@ -328,8 +331,12 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
         <div id="printable-document" className="w-full flex flex-col items-center gap-8">
           {/* ======================= PÁGINA 1 ======================= */}
           <div
-            className="official-document-page w-full max-w-[210mm] min-h-[297mm] bg-white text-black shadow-xl border border-slate-300 px-10 py-8 sm:px-14 sm:py-10 flex flex-col justify-between font-serif text-[12.5px] print:shadow-none print:border-none print:m-0 print:p-6"
-            style={{ boxSizing: 'border-box' }}
+            className="official-document-page w-full max-w-[210mm] min-h-[297mm] bg-white text-black shadow-xl border border-slate-300 px-10 py-8 sm:px-14 sm:py-10 flex flex-col justify-between print:shadow-none print:border-none print:m-0 print:p-6"
+            style={{
+              boxSizing: 'border-box',
+              fontFamily: '"Times New Roman", "Tinos", "Liberation Serif", Times, serif',
+              fontSize: '11pt',
+            }}
           >
             {/* Bloco superior de conteúdo da Página 1 */}
             <div>
@@ -337,20 +344,20 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               {renderHeader()}
 
               {/* Título Oficial */}
-              <div className="text-center mb-6">
-                <h2 className="text-[14px] sm:text-[15px] font-bold tracking-wide font-sans text-black">
+              <div className="text-center mb-5">
+                <h2 className="text-[11pt] font-bold tracking-wide text-black">
                   DECLARAÇÃO PARA VINCULAÇÃO Nº{' '}
-                  {renderVar(data.numero_declaracao, 'numero_declaracao', '001', 'font-mono')}/
-                  {renderVar(data.ano_declaracao, 'ano_declaracao', '2026', 'font-mono')}
+                  {renderVar(data.numero_declaracao, 'numero_declaracao', '001')}/
+                  {renderVar(data.ano_declaracao, 'ano_declaracao', '2026')}
                 </h2>
               </div>
 
               {/* Primeiro Parágrafo com Espaçamento entre linhas de 1,5 e recuo de 1,5cm */}
               <div
-                className="text-justify text-black mb-6 indent-[1.5cm]"
-                style={{ lineHeight: '1.8', letterSpacing: '0.01em' }}
+                className="text-justify text-black mb-5 indent-[1.5cm]"
+                style={{ lineHeight: '1.5' }}
               >
-                A Secretaria Municipal de Meio Ambiente e Bem-Estar Animal de Arujá, nas atribuições que lhe foram conferidas de
+                A Secretaria Municipal de Meio Ambiente de Arujá, nas atribuições que lhe foram conferidas de
                 acordo com a deliberação normativa{' '}
                 {renderVar(data.norma_consema, 'norma_consema', 'CONSEMA nº 01/2024')} e com a{' '}
                 {renderVar(data.lei_complementar, 'lei_complementar', 'Lei Complementar Municipal nº 053/2022')},
@@ -359,43 +366,47 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                   {renderVar(formatAreaM2(data.area_supressao, ''), 'area_supressao', '____m²')}
                 </strong>{' '}
                 de vegetação nativa em estágio{' '}
-                {renderVar(data.estagio_supressao, 'estagio_supressao', 'médio')} no imóvel registrado sob a
-                inscrição {renderVar(data.inscricao_imovel, 'inscricao_imovel', 'SE12010801.000')},{' '}
-                {renderVar(data.situacao_apm_app, 'situacao_apm_app', 'fora de APM e APP')}, localizado na{' '}
-                {renderVar(data.logradouro, 'logradouro', 'Alameda das Quaresmeiras')}, Quadra{' '}
-                {renderVar(data.quadra, 'quadra', '28')}, Lote {renderVar(data.lote, 'lote', '27')} –{' '}
-                {renderVar(data.bairro_condominio, 'bairro_condominio', 'Arujá Country Club - Arujá – SP')},
-                neste município pertencente ao proprietário{' '}
+                {renderVar(data.estagio_supressao, 'estagio_supressao', 'médio')} de regeneração no imóvel registrado sob a matrícula nº{' '}
+                <strong className="font-bold">
+                  {renderVar(
+                    data.matricula_imovel_supressao || (isInterna ? data.matricula_interna : data.matricula_imovel_autorizado),
+                    'matricula_imovel_supressao',
+                    ''
+                  )}
+                </strong>,{' '}
+                {renderVar(data.situacao_apm_app, 'situacao_apm_app', 'fora de APM e APP')}, Registrado em Cartório do Registro de Imóveis de{' '}
+                {renderVar(data.cri_imovel_supressao, 'cri_imovel_supressao', 'Santa Isabel')}, localizado na{' '}
+                {renderVar(formatEnderecoSupressao(data), 'endereco_completo_supressao', 'Rua Exemplo, Lote 01, Quadra 02, Bairro Centro')}, Arujá – SP, pertencente ao proprietário{' '}
                 <strong className="font-bold">
                   {renderVar(
                     data.nome_proprietario?.toUpperCase(),
                     'nome_proprietario',
-                    'BRUNO WELLINGTON BASAGLIA'
-                  )}, CPF: {renderVar(data.cpf_proprietario, 'cpf_proprietario', '358.065.568-08')}
-                </strong>
-                , vinculado ao{' '}
+                    '_____'
+                  )}
+                </strong>, CPF{' '}
                 <strong className="font-bold">
-                  Termo de Compensação Ambiental {renderVar(data.termo_compensacao, 'termo_compensacao', 'N°166/2025')}
-                </strong>
-                , expedido no{' '}
+                  {renderVar(data.cpf_proprietario, 'cpf_proprietario', '000.000.000-00')}
+                </strong>,{' '}
+                {renderVar(data.nacionalidade_proprietario, 'nacionalidade_proprietario', 'brasileira')}, vinculado ao{' '}
                 <strong className="font-bold">
-                  {renderVar(data.tipo_processo_1doc, 'tipo_processo_1doc', 'Protocolo 1DOC')} Nº{' '}
-                  {renderVar(data.protocolo_1doc, 'protocolo_1doc', '7.019/2024')}
-                </strong>
-                . Declara-se, ainda, que, conforme solicitado, e após o envio e análise dos documentos apresentados, os
+                  Termo de Compensação Ambiental {renderVar(formatTermoTCA(data.termo_compensacao), 'termo_compensacao', 'N°002/2026')}
+                </strong>, expedido no{' '}
+                <strong className="font-bold">
+                  {renderVar(data.tipo_processo_1doc, 'tipo_processo_1doc', 'Protocolo 1DOC Nº')}{' '}
+                  {renderVar(data.protocolo_1doc, 'protocolo_1doc', '_____')}
+                </strong>. Declara-se, ainda, que, conforme solicitado, e após o envio e análise dos documentos apresentados, os
                 quais foram aprovados por esta Secretaria no que se refere à solicitação de supressão de vegetação nativa e
                 compensação ambiental correspondente, deve ser realizada a seguinte averbação à margem da{' '}
                 <strong className="font-bold">
-                  matrícula nº {renderVar(data.matricula_averbacao, 'matricula_averbacao', '84.694')} do CRI de{' '}
-                  {renderVar(data.cri_averbacao, 'cri_averbacao', 'Mogi das Cruzes')}
-                </strong>
-                . Tal averbação deverá ser apresentada a esta Secretaria para a emissão da autorização competente.
+                  matrícula nº {renderVar(data.matricula_averbacao, 'matricula_averbacao', '_____')} do CRI de{' '}
+                  {renderVar(data.cri_averbacao, 'cri_averbacao', 'Santa Isabel')}
+                </strong>. Tal averbação deverá ser apresentada a esta Secretaria para a emissão da autorização competente.
               </div>
 
               {/* Segundo Parágrafo (Averbação) */}
               <div
-                className="text-justify text-black mb-6 indent-[1.5cm]"
-                style={{ lineHeight: '1.8', letterSpacing: '0.01em' }}
+                className="text-justify text-black mb-5 indent-[1.5cm]"
+                style={{ lineHeight: '1.5' }}
               >
                 {isExterna ? (
                   <>
@@ -419,19 +430,19 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                       {renderVar(data.proprietario_compensacao?.toUpperCase(), 'proprietario_compensacao', 'RICARDO CASEMIRO TOBERA')}
                     </strong>
                     , com área total de{' '}
-                    {renderVar(data.area_total_gleba, 'area_total_gleba', '108,389ha.')}, situado á{' '}
+                    {renderVar(formatAreaM2(data.area_total_gleba, ''), 'area_total_gleba', '____m²')}, situado á{' '}
                     {renderVar(data.localizacao_zona_origem, 'localizacao_zona_origem', 'zona rural do município de Mogi das Cruzes')},{' '}
                     <u className="font-bold decoration-black">
                       referente a compensação ambiental externa para atender à supressão de{' '}
                       {renderVar(formatAreaM2(data.area_supressao, ''), 'area_supressao', '224,70m²')} de vegetação nativa em estágio{' '}
-                      {renderVar(data.estagio_regeneracao, 'estagio_regeneracao', 'médio')} de regeneração
+                      {renderVar(data.estagio_supressao || data.estagio_regeneracao, 'estagio_supressao', 'médio')} de regeneração
                     </u>
                     , autorizada no imóvel objeto da matrícula{' '}
                     {renderVar(data.matricula_imovel_autorizado, 'matricula_imovel_autorizado', '7.346')} – CRI{' '}
                     {renderVar(data.cri_imovel_autorizado, 'cri_imovel_autorizado', 'Santa Isabel')}, de propriedade de{' '}
                     {renderVar(data.proprietario_autorizado || data.nome_proprietario, 'proprietario_autorizado', 'Bruno Welligton Basaglia')},
                     com área total de{' '}
-                    {renderVar(formatAreaM2(data.area_total_lote_autorizado, ''), 'area_total_lote_autorizado', '321,00m²')}, situado{' '}
+                    {renderVar(formatAreaM2(data.area_total_lote_autorizado, ''), 'area_total_lote_autorizado', '____m²')}, situado{' '}
                     {renderVar(data.endereco_lote_autorizado || getAutoEnderecoImovel(data), 'endereco_lote_autorizado', 'Rua Alameda das Quaresmeiras, Lote 27, Quadra 28 - Arujá – SP')},
                     município de Arujá, afim de atender o Termo de Compensação Ambiental{' '}
                     {renderVar(data.termo_compensacao, 'termo_compensacao', 'N°166/2025')}.
@@ -478,11 +489,11 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
                       {renderVar(data.proprietario_objeto || data.nome_proprietario?.toUpperCase(), 'proprietario_objeto', 'BRUNO WELLINGTON BASAGLIA')}
                     </strong>
                     , com área total de{' '}
-                    {renderVar(formatAreaM2(data.area_total_lote_interna, ''), 'area_total_lote_interna', '321,00m²')}, situado à,{' '}
+                    {renderVar(formatAreaM2(data.area_total_lote_interna, ''), 'area_total_lote_interna', '____m²')}, situado à,{' '}
                     {renderVar(data.endereco_lote_interna || getAutoEnderecoImovel(data), 'endereco_lote_interna', 'Alameda das Quaresmeiras, s/n')},{' '}
                     <u className="font-bold decoration-black">
                       referente a obrigatoriedade de manter vegetação nativa em estágio{' '}
-                      {renderVar(data.estagio_regeneracao, 'estagio_regeneracao', 'médio')} de regeneração no lote para
+                      {renderVar(data.estagio_regeneracao || data.estagio_supressao, 'estagio_regeneracao', 'médio')} de regeneração no lote para
                       atender à supressão de {renderVar(formatAreaM2(data.area_supressao, ''), 'area_supressao', '224,70m²')} de vegetação nativa
                     </u>
                     , autorizada no mesmo imóvel, afim de atender o Termo de Compensação Ambiental{' '}
@@ -509,16 +520,16 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
               {/* Se o documento for de apenas 1 página, inclui Local, Data e Assinatura na Página 1 */}
               {!isTwoPages && (
                 <>
-                  <div className="text-right my-8 font-sans text-[12.5px] text-black">
+                  <div className="text-right my-7 text-[11pt] text-black">
                     {renderVar(data.cidade_emissao, 'cidade_emissao', 'Arujá')},{' '}
                     {renderVar(data.data_emissao, 'data_emissao', '14 de janeiro de 2026')}.
                   </div>
 
-                  <div className="text-center mt-12 mb-8 font-sans">
-                    <p className="font-bold text-[13px] tracking-wide text-black uppercase">
+                  <div className="text-center mt-10 mb-6 text-[11pt]">
+                    <p className="font-bold tracking-wide text-black uppercase">
                       {renderVar(data.nome_secretario, 'nome_secretario', 'JUVENAL FERNANDO PENTEADO')}
                     </p>
-                    <p className="text-[12px] text-black">
+                    <p className="text-black">
                       {renderVar(
                         data.cargo_secretario,
                         'cargo_secretario',
@@ -537,8 +548,12 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
           {/* ======================= PÁGINA 2 (SE HOUVER MAIS DE UMA PÁGINA) ======================= */}
           {isTwoPages && (
             <div
-              className="official-document-page w-full max-w-[210mm] min-h-[297mm] bg-white text-black shadow-xl border border-slate-300 px-10 py-8 sm:px-14 sm:py-10 flex flex-col justify-between font-serif text-[12.5px] print:shadow-none print:border-none print:m-0 print:p-6"
-              style={{ boxSizing: 'border-box' }}
+              className="official-document-page w-full max-w-[210mm] min-h-[297mm] bg-white text-black shadow-xl border border-slate-300 px-10 py-8 sm:px-14 sm:py-10 flex flex-col justify-between print:shadow-none print:border-none print:m-0 print:p-6"
+              style={{
+                boxSizing: 'border-box',
+                fontFamily: '"Times New Roman", "Tinos", "Liberation Serif", Times, serif',
+                fontSize: '11pt',
+              }}
             >
               {/* Bloco superior de conteúdo da Página 2 */}
               <div>
@@ -547,24 +562,24 @@ export const DocumentPreview: React.FC<DocumentPreviewProps> = ({
 
                 {/* Continuação da Averbação e Memorial Descritivo */}
                 <div
-                  className="text-justify text-black mb-8 indent-0"
-                  style={{ lineHeight: '1.8', letterSpacing: '0.01em' }}
+                  className="text-justify text-black mb-6 indent-0"
+                  style={{ lineHeight: '1.5' }}
                 >
                   <span>{memorialSplit.part2}”</span>
                 </div>
 
                 {/* Local e Data */}
-                <div className="text-right my-10 font-sans text-[12.5px] text-black">
+                <div className="text-right my-8 text-[11pt] text-black">
                   {renderVar(data.cidade_emissao, 'cidade_emissao', 'Arujá')},{' '}
                   {renderVar(data.data_emissao, 'data_emissao', '14 de janeiro de 2026')}.
                 </div>
 
                 {/* Assinatura Oficial do Secretário */}
-                <div className="text-center mt-16 mb-8 font-sans">
-                  <p className="font-bold text-[13px] tracking-wide text-black uppercase">
+                <div className="text-center mt-14 mb-6 text-[11pt]">
+                  <p className="font-bold tracking-wide text-black uppercase">
                     {renderVar(data.nome_secretario, 'nome_secretario', 'JUVENAL FERNANDO PENTEADO')}
                   </p>
-                  <p className="text-[12px] text-black">
+                  <p className="text-black">
                     {renderVar(
                       data.cargo_secretario,
                       'cargo_secretario',

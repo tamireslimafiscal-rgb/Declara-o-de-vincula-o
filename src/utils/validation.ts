@@ -8,25 +8,26 @@ export function validateDeclaration(data: DeclarationData): {
 } {
   const issues: ValidationIssue[] = [];
 
-  // Campos essenciais gerais
+  // Campos essenciais gerais do 1º Parágrafo
   const requiredGeneral: { key: keyof DeclarationData; label: string }[] = [
     { key: 'numero_declaracao', label: 'Número da Declaração' },
     { key: 'ano_declaracao', label: 'Ano da Declaração' },
     { key: 'area_supressao', label: 'Área de Supressão (m²)' },
-    { key: 'inscricao_imovel', label: 'Inscrição Imobiliária' },
-    { key: 'logradouro', label: 'Logradouro / Rua' },
-    { key: 'quadra', label: 'Quadra' },
-    { key: 'lote', label: 'Lote' },
     { key: 'nome_proprietario', label: 'Nome do Proprietário / Requerente' },
     { key: 'cpf_proprietario', label: 'CPF do Proprietário' },
     { key: 'termo_compensacao', label: 'Termo de Compensação (TCA)' },
-    { key: 'protocolo_1doc', label: 'Protocolo 1DOC' },
+    { key: 'protocolo_1doc', label: 'Processo (1DOC / Licenciamento)' },
+    { key: 'matricula_imovel_supressao', label: 'Matrícula do Lote da Supressão' },
     { key: 'matricula_averbacao', label: 'Matrícula da Averbação' },
-    { key: 'cri_averbacao', label: 'Cartório de Registro de Imóveis (CRI)' },
+    { key: 'cri_averbacao', label: 'CRI da Averbação' },
   ];
 
   requiredGeneral.forEach(({ key, label }) => {
-    const val = (data[key] as string || '').trim();
+    let val = (data[key] as string || '').trim();
+    // Se for Área Interna, matricula_averbacao herda da matricula_imovel_supressao
+    if (key === 'matricula_averbacao' && !val && data.tipo_vinculacao === 'AREA_INTERNA') {
+      val = (data.matricula_imovel_supressao || data.matricula_interna || '').trim();
+    }
     if (!val) {
       issues.push({
         field: key,
@@ -59,7 +60,10 @@ export function validateDeclaration(data: DeclarationData): {
     ];
 
     requiredExternal.forEach(({ key, label }) => {
-      const val = (data[key] as string || '').trim();
+      let val = (data[key] as string || '').trim();
+      if (key === 'matricula_imovel_autorizado' && !val) {
+        val = (data.matricula_imovel_supressao || '').trim();
+      }
       if (!val) {
         issues.push({
           field: key,
@@ -78,7 +82,10 @@ export function validateDeclaration(data: DeclarationData): {
     ];
 
     requiredInternal.forEach(({ key, label }) => {
-      const val = (data[key] as string || '').trim();
+      let val = (data[key] as string || '').trim();
+      if (key === 'matricula_interna' && !val) {
+        val = (data.matricula_imovel_supressao || data.matricula_averbacao || '').trim();
+      }
       if (!val) {
         issues.push({
           field: key,

@@ -172,7 +172,14 @@ export default function App() {
   const handleFocusFieldFromPreview = (fieldName: keyof DeclarationData) => {
     setFocusedFieldName(fieldName);
     setMobileTab('form');
-    // Rolar suavemente até o input no mobile/desktop
+    // Rolar suavemente e focar no input correspondente
+    setTimeout(() => {
+      const el = document.getElementById(fieldName) || document.querySelector(`[name="${fieldName}"]`);
+      if (el) {
+        (el as HTMLElement).focus();
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 100);
     setTimeout(() => {
       setFocusedFieldName(null);
     }, 2500);
